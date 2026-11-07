@@ -1,0 +1,47 @@
+:root {
+  --ground: #0d0c0b;
+  --ground-2: #15130f;
+  --panel: #171510;
+  --ink: #e9e1cf;
+  --ink-2: #b9b09d;
+  --ink-3: #7d7566;
+  --hair: #2f2b24;
+  --hair-2: #45403a;
+  --gold: #c9a96e;
+  --omen: #b5533c;
+  --grace: #d8b46a;
+  --kin: #d8b46a;
+  --ward: #8c8f99;
+  --bind: #9b7fc4;
+
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --title: "IM Fell English SC", "Cormorant Garamond", Georgia, serif;
+  --mono: "Geist Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--ground); color: var(--ink); }
+body { font: 18px/1.45 var(--serif); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+#app { height: 100%; }
+
+.label {
+  font: 500 10px/1.2 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.btn {
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--hair-2);
+  color: var(--ink);
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.btn:disabled { opacity: 0.35; cursor: default; }
+.btn.primary { border-color: var(--gold); color: var(--gold); }
