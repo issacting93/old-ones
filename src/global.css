@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark; /* one deliberate look: a dark town at night */
   --ground: #0d0c0b;
   --ground-2: #15130f;
   --panel: #171510;

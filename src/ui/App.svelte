@@ -233,8 +233,8 @@
 </div>
 
 <style>
-  .app { height: 100%; display: flex; flex-direction: column; }
-  .bar { display: flex; align-items: center; gap: 20px; padding: 10px 18px; border-bottom: 1px solid var(--hair); }
+  .app { height: 100%; display: flex; flex-direction: column; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--ground); }
+  .bar { display: flex; align-items: center; gap: 20px; padding-block: 10px; border-bottom: 1px solid var(--hair); }
   .title { display: flex; flex-direction: column; }
   .town { font: 26px/1 var(--title); letter-spacing: 0.04em; }
   .stats { display: flex; gap: 18px; margin-left: auto; align-items: center; }
@@ -243,7 +243,8 @@
   .hope { color: var(--grace); } .dread { color: var(--omen); }
   .stats .stance { flex-direction: row; gap: 8px; }
 
-  main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 400px; }
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 400px; }
+  .map, .side { min-width: 0; }
   .map { position: relative; min-height: 0; }
   .side { position: relative; border-left: 1px solid var(--hair); display: flex; flex-direction: column; min-height: 0; background: var(--panel); }
   nav { display: flex; border-bottom: 1px solid var(--hair); }
@@ -303,9 +304,11 @@
   .aday.past { opacity: 0.45; }
 
   @media (max-width: 900px) {
-    main { grid-template-columns: 1fr; grid-template-rows: 55vh 1fr; }
+    main { grid-template-columns: minmax(0, 1fr); grid-template-rows: 55vh minmax(0, 1fr); }
     .side { border-left: 0; border-top: 1px solid var(--hair); }
-    .stats { gap: 10px; }
+    .stats { gap: 10px; margin-left: 0; flex-wrap: wrap; }
     .bar { flex-wrap: wrap; gap: 10px; }
+    .moonnow { margin-left: 0; }
+    .side { min-height: 0; }
   }
 </style>

@@ -100,5 +100,11 @@
     padding: 6px 4px; cursor: pointer; color: var(--ink); font-size: 18px;
   }
   .choice:hover { color: var(--gold); }
+  @media (max-width: 900px) {
+    /* on a phone the visit takes the whole screen */
+    .panel { position: fixed; inset: 0; width: 100%; z-index: 40; border-left: 0;
+      padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+  }
   .choice .n { color: var(--ink-3); font: 12px var(--mono); }
 </style>
