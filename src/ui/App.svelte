@@ -2,6 +2,8 @@
   import TownView from "./TownView.svelte";
   import ConversationPanel from "./ConversationPanel.svelte";
   import StanceMark from "./StanceMark.svelte";
+  import MoonGlyph from "./MoonGlyph.svelte";
+  import { PHASES, BLOOD_PHASE, MOON, phaseFor } from "../content/moon.js";
   import { gameStore } from "./store.js";
   import { TOWN, QUARTERS, LENSES } from "../content/town.js";
   import { BUILDINGS, BUILDING_BY_ID, FUND_LENS_COST } from "../content/buildings.js";
@@ -24,6 +26,17 @@
   const passing = $derived($s.phase === "passing");
   const ended = $derived($s.phase === "ended");
   const reading = $derived(readStance($s.stance));
+  const moonIdx = $derived(Math.max(0, PHASES.findIndex((p) => p.id === $s.moon.phase)));
+  const moon = $derived($s.moon.blood ? BLOOD_PHASE : PHASES[moonIdx]);
+  // the almanac: every night of the slice, and whether the coming full moon can be read yet
+  const almanac = $derived(Array.from({ length: TOWN.nights }, (_, i) => {
+    const night = i + 1, ph = phaseFor(night), idx = PHASES.indexOf(ph);
+    const past = night < $s.night, now = night === $s.night;
+    const isFull = ph.id === "full";
+    const bloodKnown = isFull && (now ? $s.moon.blood : past ? $s.flags.includes("blood-moon") : $s.flags.includes("blood-omen"));
+    const unreadable = isFull && !past && !now && !$s.flags.includes("blood-omen") && ($s.lenses.SHRINE || 0) < MOON.blood.foreseenAt;
+    return { night, ph, idx, past, now, blood: bloodKnown, unknown: unreadable };
+  }));
 
   // where each old one is thickest right now
   function haunt(key) {
@@ -69,6 +82,13 @@
       <span class="town">{TOWN.name}</span>
       <span class="label">Night {$s.night} of {TOWN.nights}</span>
     </div>
+    <div class="moonnow" class:blood={$s.moon.blood} title={moon.line}>
+      <MoonGlyph index={moonIdx} blood={$s.moon.blood} size={30} glow />
+      <div>
+        <div class="mname">{moon.name}</div>
+        <span class="label">Lunar day {$s.moon.day}{$s.moon.toFull > 0 ? ` · full in ${$s.moon.toFull}` : ""}</span>
+      </div>
+    </div>
     <div class="stats">
       <div><span class="label">Coin</span><b>{$s.coin}</b></div>
       <div><span class="label">Hope</span><b class="hope">{$s.hope}</b></div>
@@ -81,7 +101,7 @@
 
   <main>
     <section class="map">
-      <TownView {game} snap={$s} {placing} bind:selected {onpick} />
+      <TownView {game} snap={$s} {placing} bind:selected {onpick} {progress} />
       {#if passing}
         <div class="passing"><span class="label">The night passes</span><div class="bar-track"><div class="bar-fill" style="width:{progress * 100}%"></div></div></div>
       {/if}
@@ -154,6 +174,16 @@
           {/each}
 
         {:else}
+          <h3 class="label">Almanac</h3>
+          <div class="almanac">
+            {#each almanac as a (a.night)}
+              <div class="aday" class:now={a.now} class:past={a.past}>
+                <MoonGlyph index={a.idx} blood={a.blood} unknown={a.unknown} size={26} />
+                <span class="label">{a.night}</span>
+              </div>
+            {/each}
+          </div>
+          <p class="hint">{moon.line}</p>
           <h3 class="label">Stance</h3>
           <div class="stancebig"><StanceMark stance={$s.stance} size={96} labels /></div>
           <p class="hint">{reading.line}</p>
@@ -176,7 +206,7 @@
   {#if showDusk && $s.dusk.length && !passing && !ended}
     <div class="overlay" role="dialog">
       <div class="card">
-        <span class="label">Dusk · night {$s.night}</span>
+        <div class="duskhead"><MoonGlyph index={moonIdx} blood={$s.moon.blood} size={22} glow /><span class="label">Dusk · night {$s.night} · {moon.name}</span></div>
         {#each $s.dusk as d (d.eventId)}
           <div class="event {d.tone}">
             <h2>{d.headline}</h2>
@@ -248,7 +278,7 @@
 
   .stancebig { display: flex; flex-direction: column; align-items: center; }
   .clue, .feed { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--hair); }
-  .feed.omen { border-left: 2px solid var(--omen); } .feed.grace { border-left: 2px solid var(--grace); }
+  .feed.omen { border-left: 2px solid var(--omen); } .feed.grace { border-left: 2px solid var(--grace); } .feed.blood { border-left: 2px solid #c2412d; }
 
   .passing { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; align-items: center; }
   .bar-track { width: 220px; height: 2px; background: var(--hair); }
@@ -262,6 +292,15 @@
   .card p { margin: 0; }
   .event { display: flex; flex-direction: column; gap: 6px; padding-left: 12px; border-left: 2px solid var(--hair-2); }
   .event.omen { border-left-color: var(--omen); } .event.grace { border-left-color: var(--grace); }
+  .event.blood { border-left-color: #c2412d; } .event.blood h2 { color: #d9654f; }
+  .duskhead { display: flex; gap: 8px; align-items: center; }
+  .moonnow { display: flex; gap: 10px; align-items: center; margin-left: 18px; }
+  .mname { font-size: 18px; line-height: 1.1; }
+  .moonnow.blood .mname { color: #d9654f; }
+  .almanac { display: flex; justify-content: space-between; padding: 6px 0; }
+  .aday { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border: 1px solid transparent; }
+  .aday.now { border-color: var(--gold); }
+  .aday.past { opacity: 0.45; }
 
   @media (max-width: 900px) {
     main { grid-template-columns: 1fr; grid-template-rows: 55vh 1fr; }

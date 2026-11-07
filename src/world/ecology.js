@@ -7,7 +7,8 @@
 //
 // What the town does to the old ones:
 //   population  each species' share = its default share × (buildings' pop) × (story multipliers)
-//   draws       buildings pull species into orbit around them (the sim's own local vortices)
+//   draws       buildings pull species into orbit around them (the sim's own local vortices);
+//               the moon gathers species to the Old Tower the same way, with a wider pull
 //   intruders   a hungry apex is drawn into the busiest quarter (also a vortex, a big one)
 //   wards       old ones inside a ward's radius are pushed back out (applied here after each step;
 //               the sim has no repel of its own)
@@ -47,7 +48,7 @@ export function createEcology({ Sim, ES, outerRadius }) {
     for (const lm of landmarks) {
       if (!lm.draws.length) continue;
       const t = toTank(lm.at);
-      vortices.push({ x: t.x, y: t.y, radius: 230, strength: 0.85, species: new Set(lm.draws.map((k) => keyIdx[k]).filter((i) => i != null)) });
+      vortices.push({ x: t.x, y: t.y, radius: lm.radius || 230, strength: lm.strength || 0.85, species: new Set(lm.draws.map((k) => keyIdx[k]).filter((i) => i != null)) });
     }
     for (const it of intruders) {
       const t = toTank(it.at);

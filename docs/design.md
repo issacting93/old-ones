@@ -25,11 +25,18 @@ Six nights, then the council sits and the slice ends on the town's stance.
 - **Stance is a position, not a score.** Kinship / Distance / Dominion are three pulls; the town sits at their shares (`content/stance.js`). Nothing locks; it can always be pulled back.
 - **Building is local.** A building pins a WFC cell to a zero-weight tile and only the surrounding patch regrows, so the town changes where you build rather than reshuffling.
 
+## The moon
+
+Every night is one lunar day of a compressed eight-day cycle (`content/moon.js`). The slice starts at the new moon, so the full moon falls on night 5 and night 6 is the morning after. Each phase nudges the old ones: the new moon lets the eels range wider, the waxing moon draws the Watcher to the tower, the full moon lifts the mites and moths toward it. The moon crosses the map while the night passes and its light tints the town.
+
+**The blood moon.** A full moon rises red when the town has strained things with the old ones — dread high, the eels or koi starving, or the town leaning hard toward Distance or Dominion (`MOON.blood.when`). The night before, there is an omen: a Shrine-keeper (lens 2+) reads it plainly in the sky and the almanac marks it; everyone else just notices the dogs won't settle. Ondine then offers a choice for the eve: keep the old courtesies (which can still turn the moon pale), ring iron bells, or plan to take the old ones at the tower. Under a blood moon every old one gathers at the Old Tower, the eels and veils swell, wardstones hold half as far, and what happens depends on where the town stands: they wait at the shrines like guests (Kinship), press against the iron until it splits (Distance), or hang over the forges and presses counting what was taken (Dominion). The sleepers in the physic house sit up and watch. A clear full moon instead brings moon-viewing on the rooftops.
+
 ## Routes, as the playtests show them
 
-- **Industry** (foundries, lamps, glow-press): coin piles up; mites thin, eels come inside, the koi leave, the long sleep, the Watcher climbs out of sight. Dominion.
-- **Kin** (shrines, cisterns): mites come thick, the Watcher comes down, but nothing earns, and the Cinder Quarter goes cold — Corwin sends sixty men home. Kinship has a price too.
-- **Ward** (wardstones): dread drops at first, then the stones keep more out than they meant to. Distance.
+- **Industry** (foundries, lamps, glow-press): coin piles up; mites thin, eels come inside, the koi leave, the long sleep, the Watcher climbs out of sight, and the full moon rises red over the forges. Dominion.
+- **Kin** (shrines, cisterns): mites come thick, the Watcher comes down, the full moon is a clear moon-viewing, but nothing earns, and the Cinder Quarter goes cold — Corwin sends sixty men home. Kinship has a price too.
+- **Ward** (wardstones): dread drops at first, then the stones keep more out than they meant to, and under the blood moon the old ones press against the iron all night. Distance.
+- Keeping the courtesies on the eve of a foretold blood moon turns it pale again — the one moment a strained town can pull back.
 
 ## Known gaps in this slice
 
@@ -46,3 +53,4 @@ Six nights, then the council sits and the slice ends on the town's stance.
 3. A fourth character in the Drowned Quarter, and the flood as the slice-two mystery.
 4. Clues → revelations: Mandate's pattern crystallization, so committing to an understanding of the old ones changes what lenses can see.
 5. Endings that depend on stance and on what you learned, not just which pull leads.
+6. The `tower-snare` and `iron-bells` choices on the eve of a blood moon set flags that nothing reads yet; they are the hooks for what Dominion and Distance do with a gathered moon.

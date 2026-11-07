@@ -26,6 +26,7 @@ import { STARTING_STANCE } from "../content/stance.js";
 import { CHARACTERS, CHARACTER_BY_ID } from "../content/characters.js";
 import { EVENTS } from "../content/events.js";
 import { HUNGER, DIET, HUNGRY_INTRUDERS } from "../content/ecology-rules.js";
+import { MOON, BLOOD_PHASE, phaseFor, lunarDay, nightsToFull } from "../content/moon.js";
 
 export function initialState() {
   return {
@@ -47,6 +48,7 @@ export function initialState() {
     eco: { mult: {}, hungry: {}, intruders: {} },
     readings: { share: {}, live: {}, quarters: {} },
     dusk: [], // events that fired at the start of this night
+    moon: { day: 1, phase: "new", toFull: 4, omen: false, blood: false },
   };
 }
 
@@ -84,9 +86,16 @@ export function createGame({ CityWFC, EcologySim, EcologySpecies, seed = 1907 })
     const bm = buildingMultipliers(), sm = state.get("eco.mult") || {};
     const multipliers = {};
     for (const k of eco.keys) multipliers[k] = (bm[k] ?? 1) * (sm[k] ?? 1);
+    // the moon: this phase's pull on each species, and who it gathers to the Old Tower
+    const moon = state.get("moon"), phase = phaseFor(state.get("night"));
+    const moonPop = moon.blood ? MOON.blood.pop : phase.pop || {};
+    for (const [k, m] of Object.entries(moonPop)) multipliers[k] = (multipliers[k] ?? 1) * m;
+    const gather = moon.blood ? MOON.blood.gather : phase.gather || [];
+    const wardScale = moon.blood ? MOON.blood.wardStrength : 1;
     const built = state.get("built");
     const landmarks = built.map((b) => ({ at: town.centroid(b.cellId), draws: BUILDING_BY_ID[b.kind].draws || [] }));
-    const wardList = built.filter((b) => BUILDING_BY_ID[b.kind].wards).map((b) => ({ at: town.centroid(b.cellId), radius: BUILDING_BY_ID[b.kind].wards }));
+    if (gather.length) landmarks.push({ at: { x: 0, y: 0 }, draws: gather, radius: moon.blood ? 900 : 420, strength: moon.blood ? 1.1 : 0.7 });
+    const wardList = built.filter((b) => BUILDING_BY_ID[b.kind].wards).map((b) => ({ at: town.centroid(b.cellId), radius: BUILDING_BY_ID[b.kind].wards * wardScale }));
     const intruders = Object.entries(state.get("eco.intruders") || {}).filter(([, q]) => q).map(([key, q]) => ({ key, at: town.quarterCentroid(q) }));
     eco.apply({ multipliers, landmarks, intruders, wardList });
   }
@@ -189,7 +198,26 @@ export function createGame({ CityWFC, EcologySim, EcologySpecies, seed = 1907 })
     state.set("phase", "evening");
   }
 
+  // The moon for a night. The eve of a full moon reads the town for an omen; the full moon's own
+  // dusk decides whether it rises red — so a foreseen blood moon can still be averted.
+  function updateMoon(night) {
+    const phase = phaseFor(night);
+    const strained = test([{ type: "OR", conditions: MOON.blood.when }], ctx)
+      && !test([{ type: "OR", conditions: MOON.blood.unless || [] }], ctx);
+    const toFull = nightsToFull(night);
+    const prev = state.get("moon") || {};
+    state.set("moon", {
+      day: lunarDay(night),
+      phase: phase.id,
+      toFull,
+      omen: toFull === 1 ? strained : toFull === 0 ? !!prev.omen : false,
+      blood: phase.id === "full" && strained,
+    });
+  }
+
   function dusk(night) {
+    updateMoon(night);
+    syncEcology();
     const fired = scenario.evaluate(night);
     for (const f of fired) apply([{ type: "feed", text: f.headline, tone: f.tone }], ctx);
     state.set("dusk", fired);
@@ -204,5 +232,6 @@ export function createGame({ CityWFC, EcologySim, EcologySpecies, seed = 1907 })
     bus, state, town, eco, ctx,
     characters: CHARACTERS,
     threadFor, visit, build, fundLens, endNight, quarterOf,
+    moonPhase: () => (state.get("moon").blood ? BLOOD_PHASE : phaseFor(state.get("night"))),
   };
 }

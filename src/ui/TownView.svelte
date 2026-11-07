@@ -7,11 +7,32 @@
   import { onMount } from "svelte";
   import { QUARTERS } from "../content/town.js";
   import { BUILDING_BY_ID } from "../content/buildings.js";
+  import { PHASES, BLOOD_PHASE } from "../content/moon.js";
+  import MoonGlyph from "./MoonGlyph.svelte";
 
-  let { game, snap, placing = null, selected = $bindable(null), onpick } = $props();
+  let { game, snap, placing = null, selected = $bindable(null), onpick, progress = 0 } = $props();
+
+  // ── the sky: the moon crosses the map as the night passes, and the night tints the town ──
+  const moonIdx = $derived(Math.max(0, PHASES.findIndex((p) => p.id === snap.moon.phase)));
+  const blood = $derived(!!snap.moon.blood);
+  const light = $derived(blood ? BLOOD_PHASE.light : PHASES[moonIdx].light);
+  // a full moon rises at dusk; a new one is down all night. Evening holds the moon at its
+  // dusk position; while the night passes it runs along the arc toward dawn.
+  const t = $derived.by(() => {
+    const start = [0.05, 0.42, 0.55, 0.3, 0.1, 0.02, 0.0, 0.0][moonIdx];
+    return snap.phase === "passing" ? start + (0.95 - start) * progress : start;
+  });
+  const moonPos = $derived({ x: size * (0.06 + 0.88 * t), y: size * (0.5 - 0.44 * Math.sin(Math.PI * Math.min(1, t))) });
+  const moonUp = $derived(moonIdx !== 0 && t > 0.015 && t < 0.97);
+  const tint = $derived.by(() => {
+    if (blood) return "rgba(150, 38, 22, 0.42)";
+    const dark = 1 - light;
+    return snap.phase === "passing" ? `rgba(28, 40, 72, ${0.18 + 0.3 * dark})` : `rgba(120, 82, 40, ${0.08 + 0.12 * dark})`;
+  });
 
   let wrap, plan, gl, fallback;
   let size = $state(600);
+  let wrapW = $state(600), wrapH = $state(600);
   let hover = $state(null);
   let renderer = null;
   let dirty = true;
@@ -127,7 +148,8 @@
 
   onMount(() => {
     const ro = new ResizeObserver(([entry]) => {
-      size = Math.floor(Math.min(entry.contentRect.width, entry.contentRect.height));
+      wrapW = entry.contentRect.width; wrapH = entry.contentRect.height;
+      size = Math.floor(Math.min(wrapW, wrapH));
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       if (renderer) window.EcologyRender.resize(renderer, size * dpr, size * dpr);
       if (fallback) { fallback.width = size * dpr; fallback.height = size * dpr; }
@@ -172,11 +194,20 @@
 </script>
 
 <div class="wrap" bind:this={wrap}>
+  <!-- the night's tint covers the whole view, not just the map's square -->
+  <div class="sky tint" style="background:{tint}"></div>
+  {#if blood}<div class="sky bloodglow"></div>{/if}
+  {#if moonUp}
+    <div class="sky moonlight" style="background:radial-gradient(circle at {moonPos.x + (wrapW - size) / 2}px {moonPos.y + (wrapH - size) / 2}px, {blood ? 'rgba(194,65,45,.22)' : `rgba(239,230,207,${0.05 + 0.12 * light})`}, transparent {size * 0.45}px)"></div>
+  {/if}
   <div class="stage" style="width:{size}px;height:{size}px">
     <canvas class="plan" bind:this={plan} style="width:{size}px;height:{size}px"
       onmousemove={onmove} onmouseleave={onleave} onclick={onclick}></canvas>
     <canvas class="gl" bind:this={gl} style="width:{size}px;height:{size}px"></canvas>
     <canvas class="gl" bind:this={fallback} style="width:{size}px;height:{size}px"></canvas>
+    {#if moonUp}
+      <div class="moon" style="left:{moonPos.x}px;top:{moonPos.y}px"><MoonGlyph index={moonIdx} {blood} size={Math.max(22, size * 0.06)} glow /></div>
+    {/if}
     {#if hover}
       {@const t = town.tileAt(hover.id)}
       <div class="tip">
@@ -188,13 +219,20 @@
 </div>
 
 <style>
-  .wrap { width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; }
+  .wrap { position: relative; width: 100%; height: 100%; display: grid; place-items: center; overflow: hidden; background: #0d0c0b; }
+  .wrap > .stage { grid-area: 1 / 1; }
   .stage { position: relative; }
   canvas { position: absolute; inset: 0; display: block; }
   .plan { cursor: crosshair; }
   .gl { pointer-events: none; }
+  .sky { position: absolute; inset: 0; pointer-events: none; }
+  .tint { mix-blend-mode: multiply; transition: background 1.2s ease; z-index: 2; }
+  .moonlight { mix-blend-mode: screen; z-index: 3; }
+  .bloodglow { z-index: 2; background: radial-gradient(circle at 50% 50%, rgba(194, 65, 45, 0.28), transparent 42%); mix-blend-mode: screen; animation: pulse 4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.55; } }
+  .moon { position: absolute; z-index: 3; transform: translate(-50%, -50%); pointer-events: none; transition: left 0.3s linear, top 0.3s linear; }
   .tip {
-    position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 2px;
+    position: absolute; z-index: 3; left: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 2px;
     padding: 8px 10px; background: rgba(13, 12, 11, 0.82); border: 1px solid var(--hair); pointer-events: none;
   }
   .tip .name { font-size: 17px; }

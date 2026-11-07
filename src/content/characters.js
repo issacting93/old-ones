@@ -111,6 +111,45 @@ export const CHARACTERS = [
         onEnd: [{ type: "flag", value: "heard-ondine-lamps" }],
       },
       {
+        id: "ondine-omen",
+        title: "The hungry moon",
+        priority: 7,
+        requires: [{ type: "flag", value: "blood-omen" }, { type: "nightsToFull", value: 1 }],
+        exchanges: [
+          {
+            npc: "You've seen the moon. My grandmother had a name for a full moon that rises red. The hungry moon. She saw two in her life.",
+            interjections: [
+              { lens: "SHRINE", minLevel: 1, text: "She isn't frightened of the moon. She's frightened of what it says about the town.", followUp: "What does a hungry moon mean?" },
+              { lens: "LEDGER", minLevel: 1, text: "The Archive notes a red moon the autumn before the flood. One line, no more.", followUp: "Was there a red moon before the flood?" },
+            ],
+            choices: [
+              { text: "Tell me what happened the last time.", depth: 1 },
+              { text: "It's only a moon, Sister.", solutionJump: true },
+            ],
+            jumpReply: "Then you won't mind if I keep my lamp lit all night.",
+            checks: [
+              {
+                lens: "SHRINE", difficulty: 10,
+                pass: {
+                  npc: "\"It rises red when the town has taken more than it gave. They gather at the tower to see what we'll do. That's all. They watch. What happens after depends on what they see.\"",
+                  clue: { id: "hungry-moon", text: "A red full moon comes when the town has taken more than it gave. The old ones gather at the tower to watch what the town does." },
+                },
+                fail: { npc: "\"I don't know what it means. I only know she never let us outside under one.\"" },
+              },
+            ],
+          },
+          {
+            npc: "There's still tonight. The moon isn't full until tomorrow.",
+            choices: [
+              { text: "Then we keep the courtesies tonight. Every lamp lit, the forges banked, the water left still.", depth: 1, effects: [{ type: "dread", delta: -2 }, { type: "coin", delta: -2 }, { type: "stance", kin: 1 }, { type: "flag", value: "courtesies-kept" }], reply: "She takes your hand in both of hers. \"I'll ring the dusk bell myself.\"" },
+              { text: "Ring the iron bells at moonrise. Keep them back from the houses.", depth: 1, effects: [{ type: "stance", ward: 1 }, { type: "flag", value: "iron-bells" }], reply: "\"Iron,\" she says. \"Yes. That's what they'll see, then.\"" },
+              { text: "If they all come to the tower, we'll know where to find them.", depth: 1, effects: [{ type: "stance", bind: 1 }, { type: "flag", value: "tower-snare" }], reply: "Ondine looks at you for a long time and doesn't answer." },
+            ],
+          },
+        ],
+        onEnd: [{ type: "flag", value: "heard-ondine-omen" }],
+      },
+      {
         id: "ondine-idle",
         title: "Tending the stones",
         priority: -1,
@@ -357,6 +396,28 @@ export const CHARACTERS = [
           },
         ],
         onEnd: [{ type: "flag", value: "heard-maren-sleep" }],
+      },
+      {
+        id: "maren-blood",
+        title: "Moonrise",
+        priority: 8,
+        requires: [{ type: "bloodMoon" }],
+        exchanges: [
+          {
+            npc: "At moonrise every patient in the physic house sat up in bed. Every one, at the same moment. They're facing the tower. They won't lie down and they won't answer me.",
+            interjections: [
+              { lens: "PHYSIC", minLevel: 1, text: "Their eyes are open. They're breathing slow and even. Whatever this is, it isn't pain.", followUp: "Are they in any danger?" },
+              { lens: "SHRINE", minLevel: 1, text: "They're watching the same thing the old ones are.", followUp: "What do you think they're looking at?" },
+            ],
+            choices: [
+              { text: "Stay with them. I want to see.", depth: 2, reply: "You stand at the window with her until the moon is high. Out over the tower, something with a halo turns slowly, and every head in the ward turns with it." },
+              { text: "Close the shutters. Get them to sleep.", solutionJump: true },
+            ],
+            jumpReply: "She closes them. The patients turn toward the tower through the wood.",
+            clue: { id: "sleepers-watch", text: "Under the blood moon the sleepers sat up and watched the tower, turning as the Watcher turned." },
+          },
+        ],
+        onEnd: [{ type: "flag", value: "heard-maren-blood" }],
       },
       {
         id: "maren-idle",

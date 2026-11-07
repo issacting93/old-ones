@@ -24,6 +24,7 @@ const ROUTES = {
   kin: [["shrine", "lantern"], ["cistern", "cistern"], ["shrine", "cistern"], ["shrine", "drowned"], [null], [null]],
   ward: [["foundry", "cinder"], ["wardstone", "cinder"], [null], ["wardstone", "cistern"], [null], [null]],
 };
+const PULL = { industry: "bind", kin: "kin", ward: "ward" }; // which way the mayor leans when a choice pulls the stance
 const routeName = process.argv[2] || "industry";
 const route = ROUTES[routeName];
 Math.random = (() => { let a = 7; return () => ((a = (a * 16807) % 2147483647) / 2147483647); })(); // repeatable dice
@@ -34,7 +35,8 @@ const fmt = (o) => Object.entries(o).map(([k, v]) => `${k} ${typeof v === "numbe
 
 console.log(`route: ${routeName}`);
 for (let n = 0; n < route.length; n++) {
-  console.log(`\n══ night ${S("night")} ══  coin ${S("coin")}  hope ${S("hope")}  dread ${S("dread")}  stance ${fmt(S("stance"))}`);
+  const ph = g.moonPhase();
+  console.log(`\n══ night ${S("night")} · ${ph.name}${S("moon.omen") && !S("moon.blood") ? " (omen)" : ""} ══  coin ${S("coin")}  hope ${S("hope")}  dread ${S("dread")}  stance ${fmt(S("stance"))}`);
   for (const d of S("dusk")) console.log(`  dusk · ${d.headline}`);
   // visit whoever has the most pressing thread
   const ranked = g.characters.map((c) => ({ c, t: g.threadFor(c.id) })).filter((x) => x.t).sort((a, b) => (b.t.priority || 0) - (a.t.priority || 0));
@@ -42,9 +44,11 @@ for (let n = 0; n < route.length; n++) {
     const convo = g.visit(c.id);
     if (!convo) continue;
     while (!convo.done) {
-      // listen: prefer a lens follow-up, else the first non-jump choice
-      const i = Math.max(0, convo.choices.findIndex((ch) => ch.kind === "lens"), convo.choices.findIndex((ch) => ch.kind === "free"));
-      convo.choose(convo.choices.findIndex((ch) => ch.kind === "lens") >= 0 ? convo.choices.findIndex((ch) => ch.kind === "lens") : i);
+      // lean the route's way when a choice pulls the stance; otherwise listen (lens follow-up, then a non-jump)
+      const ch = convo.choices;
+      const leans = ch.findIndex((c) => (c.effects || []).some((e) => e.type === "stance" && e[PULL[routeName]]));
+      const lens = ch.findIndex((c) => c.kind === "lens"), free = ch.findIndex((c) => c.kind === "free");
+      convo.choose(leans >= 0 ? leans : lens >= 0 ? lens : Math.max(0, free));
     }
     console.log(`  visit · ${c.name} — "${convo.thread.title}" (depth ${convo.depth}, clues ${convo.clues.map((k) => k.id).join(" ") || "none"})`);
   }

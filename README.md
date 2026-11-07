@@ -2,7 +2,7 @@
 
 A gothic mystery town game. You are the mayor of **Vesper**, a walled town built on water the old ones lived on long before anyone laid a stone. Each night you walk the quarters and listen to the people who live there, then the council makes one decision about what the town builds. Everything you build changes how the old ones live, and how they live changes what people have to tell you. Over the nights the town drifts toward one of three relationships with them: **Kinship** (live alongside them), **Distance** (keep them out) or **Dominion** (put them to use).
 
-This repo is the first playable slice: four quarters, three townsfolk, six buildings, seven species of old ones, and about a dozen dusk events across six nights.
+This repo is the first playable slice: four quarters, three townsfolk, six buildings, seven species of old ones, about twenty dusk events, and a lunar cycle across six nights that ends on a full moon — clear, or blood red, depending on what the town has done.
 
 ```sh
 npm install
@@ -31,7 +31,7 @@ npm run species      # rebuild the slim species file after changing src/content/
 | `src/world/town-map.js` | The town as a radial WFC layout; building pins a cell and regrows the streets locally | Forge's city generator |
 | `src/world/ecology.js` | The old ones over the town; buildings set populations, draw species, raise wards | Forge's Cybernetic Ecology sim |
 | `src/game/engine.js` | The night loop: dusk → visits → council → night | New |
-| `src/content/` | Everything authored: town, quarters, lenses, buildings, old ones, characters, events | New |
+| `src/content/` | Everything authored: town, quarters, lenses, buildings, old ones, characters, events, the moon | New |
 | `src/ui/` | Svelte 5 views: town map with the creature render on top, conversation panel, council, ledger | New |
 | `public/vendor/forge/` | Classic scripts copied from interactions_library | Forge |
 | `tools/` | `slim-species.mjs` (cuts the 20 MB species file to the roster), `playtest.mjs` (headless runs) | New |

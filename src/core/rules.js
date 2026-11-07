@@ -61,6 +61,12 @@ export const CONDITIONS = {
   talkedTo: (c, ctx) => (get(ctx, `talked.${c.character}`, 0)) >= (c.times ?? 1),
   threadDone: (c, ctx) => get(ctx, "threadsDone", []).includes(c.value),
 
+  // the moon (state.moon is set at every dusk from content/moon.js)
+  moonPhase: (c, ctx) => get(ctx, "moon.phase") === c.value,
+  bloodMoon: (c, ctx) => !!get(ctx, "moon.blood", false),
+  moonOmen: (c, ctx) => !!get(ctx, "moon.omen", false),
+  nightsToFull: (c, ctx) => get(ctx, "moon.toFull", -1) === c.value,
+
   // combinators
   AND: (c, ctx) => (c.conditions || []).every((x) => evalOne(x, ctx)),
   OR: (c, ctx) => (c.conditions || []).some((x) => evalOne(x, ctx)),
