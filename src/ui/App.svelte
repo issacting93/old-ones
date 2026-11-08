@@ -1,5 +1,6 @@
 <script>
   import TownView from "./TownView.svelte";
+  import RouteView from "./RouteView.svelte";
   import TalkPanel from "./TalkPanel.svelte";
   import Reckoning from "./Reckoning.svelte";
   import StanceMark from "./StanceMark.svelte";
@@ -27,6 +28,12 @@
   let combineMsg = $state("");
   let started = $state(!firstVisit);
   let confirmReset = $state(false);
+
+  // the map: the town staged Route Zero style, or the flat plan (remembered per browser)
+  const VIEW_KEY = "old-ones.view";
+  let view = $state((() => { try { return localStorage.getItem(VIEW_KEY) || "stage"; } catch { return "stage"; } })());
+  let stageFailed = $state(false);
+  function setView(v) { view = v; try { localStorage.setItem(VIEW_KEY, v); } catch {} }
 
   game.bus.on("regrow.progress", ({ p }) => (regrow = p));
 
@@ -111,7 +118,15 @@
 
   <main>
     <section class="map">
-      <TownView {game} snap={$s} {focus} {progress} />
+      {#if view === "stage" && !stageFailed}
+        <RouteView {game} snap={$s} {focus} {progress} onfail={() => (stageFailed = true)} />
+      {:else}
+        <TownView {game} snap={$s} {focus} {progress} />
+      {/if}
+      {#if !stageFailed}
+        <button class="viewswitch" onclick={() => setView(view === "stage" ? "plan" : "stage")}
+          title={view === "stage" ? "See the town as a flat plan" : "See the town staged at night"}>{view === "stage" ? "Plan" : "Stage"}</button>
+      {/if}
       {#if passing}
         <div class="passing"><span class="label">The night passes</span><div class="track"><div class="fill" style="width:{progress * 100}%"></div></div></div>
       {/if}
@@ -343,6 +358,8 @@
 
   .hand { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .hcard { position: relative; text-align: left; background: var(--ground-2); border: 1px solid var(--hair); padding: 10px 12px 12px; cursor: pointer; color: var(--ink); display: flex; flex-direction: column; gap: 4px; min-height: 132px; }
+  .viewswitch { position: absolute; top: 12px; right: 12px; z-index: 6; font: 500 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink); background: rgba(13, 12, 11, .6); border: 1px solid var(--hair-2); padding: 6px 10px; cursor: pointer; backdrop-filter: blur(4px); }
+  .viewswitch:hover, .viewswitch:focus-visible { border-color: var(--gold); color: var(--gold); outline: none; }
   .hcard:hover:not(:disabled), .hcard:focus-visible { border-color: var(--gold); outline: none; }
   .hcard:disabled { opacity: 0.4; cursor: default; }
   .hcard.lead { border-color: var(--gold); }

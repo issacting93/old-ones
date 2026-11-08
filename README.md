@@ -26,10 +26,11 @@ Every link is recorded in the brain (`core/graph.js`), and the full moon reads i
 | `src/core/` | Event bus, state store, dice, the rules language, scenario system, conversations (`talk.js`), the brain (`graph.js`) | Mandate (`systems/`), see below |
 | `src/world/town-map.js` | The town as a radial WFC layout, weighted by the sentence, with buildings pinned in | Forge's city generator |
 | `src/world/ecology.js` | The old ones over the town; buildings set populations, draw species, raise wards | Forge's Cybernetic Ecology sim |
+| `src/world/route-stage.js` | The town staged the Kentucky Route Zero way in three.js: the WFC town built from creature parts, Spire Forge towers, ridges, pines, one lantern, the old ones drawn over it | Route Scene (`tools/world-scene/route-scene.html`) |
 | `src/game/engine.js` | Loops and nights: regrow → dusk → deal → two actions → night → … → the full moon | New |
 | `src/game/case.js` | The mystery generator: picks what happened from the world and writes the brain | New |
 | `src/content/` | Everything authored: sigils, cases, characters, places, townsfolk, lore, town, buildings, old ones, events, the moon | New |
-| `src/ui/` | Svelte 5 views: town map with the creature render on top, conversation panel, council, ledger | New |
+| `src/ui/` | Svelte 5 views: the staged town (`RouteView`) or flat plan (`TownView`), conversation panel, reckoning, ledger | New |
 | `public/vendor/forge/` | Classic scripts copied from interactions_library | Forge |
 | `tools/` | `slim-species.mjs` (cuts the 20 MB species file to the roster), `build-sigils.mjs` (draws the words with Sigil Forge), `playtest.mjs` (headless loops), `artifact.mjs` | New |
 
@@ -38,7 +39,7 @@ Most new work only needs `src/content/`. Each content file explains its own form
 ## Provenance
 
 Copied from [interactions_library](https://github.com/issacting93/interactions_library) at `6b38818`, unmodified, into `public/vendor/forge/`:
-`shared/city/city-wfc.js`, `shared/ecology/ecology-sim.js`, `shared/ecology/ecology-render.js`. `ecology-species.slim.js` is generated from `shared/ecology/ecology-species.js` by `npm run species`. `src/content/sigil-glyphs.js` is generated from `shared/generators/sigil-generator.js` and `shared/creature-parts.json` by `npm run sigils`.
+`shared/city/city-wfc.js`, `shared/ecology/ecology-sim.js`, `shared/ecology/ecology-render.js`; and at `59760f6`: `shared/style/style-recipes.js`, `shared/creature-arch.js`, `shared/creature-parts.json`, `shared/tower/creature-spire.js`, `shared/city/creature-city.js` (Route Scene's staging). `ecology-species.slim.js` is generated from `shared/ecology/ecology-species.js` by `npm run species`. `src/content/sigil-glyphs.js` is generated from `shared/generators/sigil-generator.js` and `shared/creature-parts.json` by `npm run sigils`.
 
 Copied from [Mandate](https://github.com/issacting93/Mandate) at `0207883`, unmodified: `systems/bus.js`, `systems/state.js`, `systems/dice.js`.
 

@@ -69,13 +69,16 @@ Night 8. A blood moon rises if the town is strained (dread 5+, starving eels or 
 
 Saved in the browser (`localStorage`, key `old-ones.carry.v1`): the lexicon, up to 12 memories, stance, the sentence, the next missing person, how many questions are answered, and the history of towns. The town, its people's trust, its buildings and its dread are all new.
 
+## The look
+
+The map is the town staged the Kentucky Route Zero way (`world/route-stage.js`, shown by `ui/RouteView.svelte`), ported from interactions_library's Route Scene: a fixed orthographic camera, unlit flat fills shaded only by stepped depth bands (the shared Route Zero recipe in `style-recipes.js`), thin pencil lines, ridges and pines cut out behind, the road you came in by, a painted sky with the moon at its phase. The town is this loop's own WFC town built from creature parts (`creature-city.js`); the Old Tower and every building the sentence pinned are Spire Forge towers (`creature-spire.js`), and the lit ones burn as windows. The old ones are the game's own sim, each drawn as its Cybernetic Ecology figure. One amber lantern hangs in the tower's crown and moves to whatever place or quarter a card points at. The palette is sage at dusk, ultramarine while the night passes, rust under a blood moon. Drag turns and tilts the set a little; the wheel zooms. "Plan" switches to the flat plan (`ui/TownView.svelte`), which is also the fallback without WebGL2.
+
 ## Checking changes
 
 `npm run playtest -- 3 listener` plays three loops headless; `hasty` plays a detective who promises fixes. The log shows each night, what was learned, the reckoning, the brain's explanation and the sentence written.
 
 ## Known gaps
 
-- The map is still the flat plan. Route Scene's Kentucky Route Zero staging is the next visual step (design doc, "Look").
 - Generated people speak in templates; an LLM voicing them over engine-owned facts (Mandate's rule split) is the natural next step for variety.
 - Mandate's insight freshness and costly de-commit aren't in; deductions don't yet colour what you hear.
 - Five cases is enough to see the system work, not enough for many loops. The fifth question of the larger mystery has no ending sequence yet.

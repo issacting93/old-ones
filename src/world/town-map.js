@@ -115,9 +115,14 @@ export function createTownMap(CityWFC, seed, { weights = {} } = {}) {
     return cells.find((c) => c.ring === ring && a >= c.a0 && a < c.a1) || null;
   }
 
-  first();
+  let order = [];
+  order = first().order || [];
   return {
-    cells, tiles, pins, CityWFC,
+    cells, tiles, pins, CityWFC, seed,
+    // the solver's current answer (tile index per cell) and its first collapse order, in the
+    // shape interactions_library's creature-city.js reads as a "wfc" result
+    get result() { return result; },
+    get order() { return order; },
     outerRadius: CityWFC.RADII[CityWFC.RINGS.length],
     build, canBuild, tileAt, cellAt,
     zoneName: (z) => ZONE_NAMES[z] || z,
