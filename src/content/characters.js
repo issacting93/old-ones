@@ -1,438 +1,105 @@
-// content/characters.js — the townsfolk you can visit, and what they will say.
+// content/characters.js — the people of Vesper who are there every loop.
 //
-// Format (extends Mandate's conversations_v2.js):
-//   character: { id, name, role, quarter, initials, threads: [...] }
-//   thread:    { id, title, priority, requires: [conditions], exchanges: [...], onEnd: [effects], repeatable? }
-//   exchange:  {
-//     npc: "what they say",
-//     interjections: [{ lens, minLevel, text, followUp, effects? }],   // a lens you have speaks up
-//     choices: [{ text, depth, reply?, effects?, solutionJump?, end? }],
-//     jumpReply: "how they answer a solution-jump",
-//     checks: [{ lens, difficulty, pass: { npc, clue, effects }, fail: { npc, clue, effects } }],
-//     clue: { id, text }                                              // gained by listening (not jumping)
-//   }
-// Conditions and effects are the language in core/rules.js. A thread's `requires` is how the
-// world — the old ones included — decides what someone has to say tonight.
+// They are written by hand; what they know about this loop's case is generated (content/
+// cases.js). Each loop they meet you as a stranger again. Fields:
+//   self      what they tell you when you ask about them (once a loop), and the sigil word they
+//             show you while they do (`shows`, the first one you haven't seen from them)
+//   greet     opening lines by trust (0 stranger … 3 trusted)
+//   nothing   when they have nothing more on the case
+//   reacts    what they say when you show a card nothing in the case explains
+//   jump      how they answer when you promise a fix before you understand
 
 export const CHARACTERS = [
-  // ─────────────────────────────────────────────────────────────────────────────
   {
     id: "ondine",
     name: "Sister Ondine Hale",
     role: "Keeper of the wayside stones",
     quarter: "lantern",
     initials: "OH",
-    threads: [
-      {
-        id: "ondine-rite",
-        title: "The dusk rite",
-        exchanges: [
-          {
-            npc: "Every dusk for sixty years I've lit the lamp on the wayside stone, and every dusk the mites have come. My mother lit it before me. People call it a prayer. It isn't. It's a greeting.",
-            interjections: [
-              { lens: "SHRINE", minLevel: 1, text: "She said greeting, not offering. The difference matters to her.", followUp: "What's the difference, to you?" },
-              { lens: "LEDGER", minLevel: 1, text: "The Archive keeps no record of this rite. Not a line. Someone left it out.", followUp: "Why isn't the rite written down anywhere?" },
-            ],
-            choices: [
-              { text: "Tell me about the mites.", depth: 1 },
-              { text: "I'll have the council fund new lamps for every stone.", solutionJump: true },
-            ],
-            jumpReply: "Lamps. Yes. The last mayor said that too.",
-            clue: { id: "rite-greeting", text: "The dusk rite at the wayside stones is a greeting, not an offering. Ondine's family has kept it for generations." },
-          },
-          {
-            npc: "When the mites come, the koi rise in the cisterns an hour later. Then the swifts over the roofs. Then the veils over the groves. It goes down the line every night, like a lamp passed hand to hand.",
-            interjections: [
-              { lens: "SURVEY", minLevel: 1, text: "The order she describes follows the water downhill.", followUp: "Does it always start here, in your quarter?" },
-              { lens: "PHYSIC", minLevel: 1, text: "People who live near the stones sleep well. You've heard it said and never thought about it.", followUp: "Do the people near the stones sleep better?" },
-            ],
-            checks: [
-              {
-                lens: "SHRINE", difficulty: 9,
-                pass: {
-                  npc: "She lowers her voice. \"It doesn't start here. It starts at the tower. Something up there wakes first. We only see it when it reaches us.\"",
-                  clue: { id: "tower-first", text: "The nightly waking starts at the Old Tower, not the shrines. Something there wakes first." },
-                },
-                fail: { npc: "\"It's just how it goes,\" she says, and looks at the lamp instead of you." },
-              },
-            ],
-            choices: [{ text: "Go on.", depth: 1 }],
-            clue: { id: "chain-of-light", text: "At dusk the old ones wake in order: mites, then koi, then swifts, then veils. Everything waits on the mites." },
-          },
-          {
-            npc: "Corwin wants another foundry. I don't hate him for it; his people need the work. I only ask that someone thinks about what smoke does to still water.",
-            choices: [
-              { text: "What does it do?", depth: 1, reply: "Ask the koi. Ask Maren. I only know the mites come thinner when the wind is from the south." },
-              { text: "I'll keep the stones in mind when the council sits.", depth: 1, effects: [{ type: "stance", kin: 1 }], end: true },
-              { text: "Then I won't let the foundry be built.", solutionJump: true },
-            ],
-            jumpReply: "Don't promise me that. You don't know yet what the town needs. Neither do I.",
-          },
-        ],
-        onEnd: [{ type: "flag", value: "met-ondine" }],
-      },
-      {
-        id: "ondine-lamps",
-        title: "The lamps burn alone",
-        priority: 5,
-        requires: [{ type: "OR", conditions: [{ type: "speciesBelow", key: "wisp", value: 0.6 }, { type: "flag", value: "mites-thinning" }] }],
-        exchanges: [
-          {
-            npc: "I lit the lamp and nothing came. Last night and the night before. The children asked me if the mites had died. I didn't know what to tell them.",
-            interjections: [
-              { lens: "SHRINE", minLevel: 1, text: "A greeting no one answers. To her, that's worse than an empty room.", followUp: "What does it mean, when they don't come?" },
-              { lens: "PHYSIC", minLevel: 1, text: "She hasn't slept. Her hands shake when she trims the wick.", followUp: "When did you last sleep?" },
-            ],
-            choices: [
-              { text: "What do you think happened?", depth: 1 },
-              { text: "We'll bring them back. I promise.", solutionJump: true },
-            ],
-            jumpReply: "With what? You don't know why they left.",
-            clue: { id: "mites-gone", text: "The mites no longer come to the Lantern Quarter stones at dusk." },
-          },
-          {
-            npc: "My grandmother said the town was let stay because it keeps the courtesies. I always thought it was a story for children.",
-            checks: [
-              {
-                lens: "SHRINE", difficulty: 10,
-                pass: {
-                  npc: "\"Lamps at dusk. Still water. No iron in the groves.\" She counts them off on her fingers like a child would. \"That was the whole of it. Three things.\"",
-                  clue: { id: "the-courtesies", text: "The town was let stay on three courtesies: lamps at dusk, still water, no iron in the groves." },
-                },
-                fail: { npc: "\"It's only a story,\" she says, too quickly." },
-              },
-            ],
-            choices: [
-              { text: "If the foundry smoke is the cause, I'll have its fires banked at dusk.", depth: 1, effects: [{ type: "flag", value: "fires-banked" }, { type: "stance", kin: 1 }, { type: "coin", delta: -1 }], reply: "She closes her eyes. \"Thank you. Corwin will hate it.\"" },
-              { text: "The town has to grow. The mites will find somewhere else.", depth: 1, effects: [{ type: "stance", bind: 1 }], reply: "\"Somewhere else,\" she repeats. \"Yes. I suppose that's what everyone says about the thing they're pushing out.\"" },
-            ],
-          },
-        ],
-        onEnd: [{ type: "flag", value: "heard-ondine-lamps" }],
-      },
-      {
-        id: "ondine-omen",
-        title: "The hungry moon",
-        priority: 7,
-        requires: [{ type: "flag", value: "blood-omen" }, { type: "nightsToFull", value: 1 }],
-        exchanges: [
-          {
-            npc: "You've seen the moon. My grandmother had a name for a full moon that rises red. The hungry moon. She saw two in her life.",
-            interjections: [
-              { lens: "SHRINE", minLevel: 1, text: "She isn't frightened of the moon. She's frightened of what it says about the town.", followUp: "What does a hungry moon mean?" },
-              { lens: "LEDGER", minLevel: 1, text: "The Archive notes a red moon the autumn before the flood. One line, no more.", followUp: "Was there a red moon before the flood?" },
-            ],
-            choices: [
-              { text: "Tell me what happened the last time.", depth: 1 },
-              { text: "It's only a moon, Sister.", solutionJump: true },
-            ],
-            jumpReply: "Then you won't mind if I keep my lamp lit all night.",
-            checks: [
-              {
-                lens: "SHRINE", difficulty: 10,
-                pass: {
-                  npc: "\"It rises red when the town has taken more than it gave. They gather at the tower to see what we'll do. That's all. They watch. What happens after depends on what they see.\"",
-                  clue: { id: "hungry-moon", text: "A red full moon comes when the town has taken more than it gave. The old ones gather at the tower to watch what the town does." },
-                },
-                fail: { npc: "\"I don't know what it means. I only know she never let us outside under one.\"" },
-              },
-            ],
-          },
-          {
-            npc: "There's still tonight. The moon isn't full until tomorrow.",
-            choices: [
-              { text: "Then we keep the courtesies tonight. Every lamp lit, the forges banked, the water left still.", depth: 1, effects: [{ type: "dread", delta: -2 }, { type: "coin", delta: -2 }, { type: "stance", kin: 1 }, { type: "flag", value: "courtesies-kept" }], reply: "She takes your hand in both of hers. \"I'll ring the dusk bell myself.\"" },
-              { text: "Ring the iron bells at moonrise. Keep them back from the houses.", depth: 1, effects: [{ type: "stance", ward: 1 }, { type: "flag", value: "iron-bells" }], reply: "\"Iron,\" she says. \"Yes. That's what they'll see, then.\"" },
-              { text: "If they all come to the tower, we'll know where to find them.", depth: 1, effects: [{ type: "stance", bind: 1 }, { type: "flag", value: "tower-snare" }], reply: "Ondine looks at you for a long time and doesn't answer." },
-            ],
-          },
-        ],
-        onEnd: [{ type: "flag", value: "heard-ondine-omen" }],
-      },
-      {
-        id: "ondine-idle",
-        title: "Tending the stones",
-        priority: -1,
-        repeatable: true,
-        exchanges: [
-          {
-            npc: "Nothing new tonight, Mayor. The lamp's lit. I'm watching to see who answers.",
-            choices: [{ text: "I'll leave you to it.", depth: 0, end: true }],
-          },
-        ],
-      },
+    shows: ["light", "kin", "water"],
+    self: "Every dusk for sixty years I've lit the lamp on the wayside stone, and every dusk the mites have come. People call it a prayer. It isn't. It's a greeting. My grandmother taught me the signs on the stones. I know what three of them mean. She knew more.",
+    greet: [
+      "The old woman at the shrine watches you come up the lane and goes on trimming the wick.",
+      "Ondine nods to you and moves over on the bench.",
+      "Ondine has kept the kettle warm. She says she knew you would come back tonight.",
+      "Ondine takes both your hands. \"You have a look about you,\" she says, \"like someone who has been here before.\"",
     ],
+    nothing: "I've told you what the stones know. The rest is between you and them.",
+    reacts: {
+      sighting: "\"You've been watching them.\" She seems pleased. \"Most people here only look when they're frightened.\"",
+      word: "She traces it in the air without touching the card. \"Where did you see this? My grandmother drew it on our door every spring.\"",
+      place: "\"I light a lamp there some nights. Not often enough.\"",
+      person: "\"I've known them since they were small. Be gentle with them.\"",
+      clue: "She listens and says nothing for a while. \"Yes. That sounds like the town.\"",
+      memory: "She looks at you for a long time. \"You talk like someone who's been here before. People like that used to come, when I was a girl.\"",
+    },
+    jump: "Promises. Yes. The last one who came asking said that too.",
   },
-
-  // ─────────────────────────────────────────────────────────────────────────────
   {
     id: "corwin",
     name: "Corwin Ashe",
     role: "Foundry master",
     quarter: "cinder",
     initials: "CA",
-    threads: [
-      {
-        id: "corwin-work",
-        title: "Coin and work",
-        exchanges: [
-          {
-            npc: "You want to know what the Cinder Quarter needs? Work. Two hundred families eat because my furnaces burn. Build me another and that's two hundred more.",
-            interjections: [
-              { lens: "LEDGER", minLevel: 1, text: "The Ledger shows forge coin paid for the last repairs to the wall.", followUp: "What does the town owe the forges?" },
-              { lens: "SURVEY", minLevel: 1, text: "The slag heaps sit uphill of the Cistern Quarter.", followUp: "Where does the runoff from the heaps go?" },
-            ],
-            choices: [
-              { text: "Tell me about the families.", depth: 1 },
-              { text: "You'll have your foundry.", solutionJump: true },
-            ],
-            jumpReply: "Good. Though you didn't ask what it'd cost.",
-            clue: { id: "forge-coin", text: "The forges carry the town's coin. Two hundred families depend on them." },
-          },
-          {
-            npc: "Ondine will tell you the smoke hurts her little lights. Maybe it does. I've never seen a mite feed a child.",
-            interjections: [
-              { lens: "SHRINE", minLevel: 1, text: "He isn't wrong, and he knows he isn't wholly right.", followUp: "Have you ever watched what the mites do?" },
-              { lens: "PHYSIC", minLevel: 1, text: "Scarred hands, a rough chest. The furnaces cost him too.", followUp: "What do the furnaces cost your workers?" },
-            ],
-            checks: [
-              {
-                lens: "SURVEY", difficulty: 10,
-                pass: {
-                  npc: "He shrugs, then doesn't. \"Runoff goes downhill into the culverts. Some mornings the Cistern wells taste of iron. I've told no one that.\"",
-                  clue: { id: "iron-in-wells", text: "Runoff from the Cinder heaps reaches the cistern culverts. Some mornings the wells taste of iron." },
-                },
-                fail: { npc: "\"Smoke goes up. That's what smoke does.\"" },
-              },
-            ],
-            choices: [{ text: "Go on.", depth: 1 }],
-          },
-          {
-            npc: "I'm not a monster, Mayor. I just think a town gets to grow. Things that were here before us will have to make room, same as the trees did.",
-            choices: [
-              { text: "And if they won't make room?", depth: 1, reply: "\"Then we'll find out who was here first.\" He means it as a joke. Neither of you laughs." },
-              { text: "Growth, then. But carefully.", depth: 1, effects: [{ type: "stance", bind: 1 }], end: true },
-            ],
-          },
-        ],
-        onEnd: [{ type: "flag", value: "met-corwin" }],
-      },
-      {
-        id: "corwin-eel",
-        title: "Something long and pale",
-        priority: 6,
-        requires: [{ type: "OR", conditions: [{ type: "intruding", key: "eel" }, { type: "flag", value: "eel-inside" }] }],
-        exchanges: [
-          {
-            npc: "One of them came over the slag heaps last night. Long as a street and white as bone. It took the Harkers' dog off their step. People are talking about wardstones, Mayor.",
-            interjections: [
-              { lens: "SHRINE", minLevel: 1, text: "The eels never come inside the wall unless they're starving.", followUp: "Why would it come inside now?" },
-              { lens: "PHYSIC", minLevel: 1, text: "He's frightened, and hiding it badly.", followUp: "Is anyone hurt?" },
-            ],
-            choices: [
-              { text: "Tell me exactly what you saw.", depth: 1 },
-              { text: "I'll have the wardstones raised tomorrow.", solutionJump: true },
-            ],
-            jumpReply: "...That's what I wanted to hear. Isn't it.",
-            clue: { id: "eel-hungry", text: "A Pale Eel came over the Cinder heaps. The eels only come inside the wall when they're starving." },
-          },
-          {
-            npc: "It didn't eat the dog. It took it, and dropped it in the street, and went looking for something else. What does a thing like that even eat?",
-            interjections: [
-              { lens: "SHRINE", minLevel: 1, text: "It eats the mites. When the mites thin out, the eels follow their hunger into town." },
-              { lens: "SURVEY", minLevel: 2, text: "It came in along the culverts — the same way the runoff goes out." },
-            ],
-            choices: [
-              { text: "Iron, then. Wardstones on the heaps.", depth: 1, effects: [{ type: "stance", ward: 1 }, { type: "flag", value: "corwin-wants-wards" }], reply: "He nods, relieved, and you can see he's already pricing the stone." },
-              { text: "Or we feed the water again, and it goes home.", depth: 1, effects: [{ type: "stance", kin: 1 }], reply: "\"Feed it,\" he says slowly. \"You want to feed it.\"" },
-              { text: "Something that strong... could it be put to work?", depth: 1, effects: [{ type: "stance", bind: 1 }, { type: "flag", value: "corwin-harness" }], reply: "Corwin stares at you. \"You're asking if we can harness that.\" He doesn't say no." },
-            ],
-          },
-        ],
-        onEnd: [{ type: "flag", value: "heard-corwin-eel" }],
-      },
-      {
-        id: "corwin-cold",
-        title: "Cold furnaces",
-        priority: 5,
-        requires: [{ type: "flag", value: "cold-furnaces" }],
-        exchanges: [
-          {
-            npc: "Sixty men, Mayor. I sent sixty men home tonight. You've built shrines and cisterns and every one of them is lovely, and none of them pays a wage.",
-            interjections: [
-              { lens: "LEDGER", minLevel: 1, text: "The town's coin is thin. Nothing you've built earns anything.", followUp: "How long can the quarter last like this?" },
-              { lens: "SHRINE", minLevel: 1, text: "The old courtesies never said the town had to be poor.", followUp: "Is there work that doesn't foul the water?" },
-            ],
-            choices: [
-              { text: "I hear you. Tell me what the quarter needs.", depth: 1 },
-              { text: "I'll build you a foundry tomorrow.", solutionJump: true },
-            ],
-            jumpReply: "Will you. And what will Ondine say?",
-            clue: { id: "kin-cost", text: "Kindness to the old ones has left the Cinder Quarter without wages. Sixty men sent home." },
-          },
-          {
-            npc: "I'm not asking you to poison the wells. I'm asking you to remember there are people in this town too.",
-            checks: [
-              {
-                lens: "SURVEY", difficulty: 9,
-                pass: {
-                  npc: "He rubs his jaw. \"There's clay under the Drowned Quarter. Good clay. Kilns run cooler than furnaces. Less smoke. I've never said it because nobody goes there.\"",
-                  clue: { id: "drowned-clay", text: "There is good clay under the Drowned Quarter. Kilns would run cooler and cleaner than furnaces." },
-                },
-                fail: { npc: "\"I don't know what else there is. I know iron.\"" },
-              },
-            ],
-            choices: [
-              { text: "Then we'll find work that sits easier with the water.", depth: 1, effects: [{ type: "stance", kin: 1 }], reply: "\"Find it quickly, then.\"" },
-              { text: "You're right. The town comes first.", depth: 1, effects: [{ type: "stance", bind: 1 }], reply: "He nods once, like a man who has won something he isn't sure he wanted." },
-            ],
-          },
-        ],
-        onEnd: [{ type: "flag", value: "heard-corwin-cold" }],
-      },
-      {
-        id: "corwin-idle",
-        title: "The furnaces",
-        priority: -1,
-        repeatable: true,
-        exchanges: [
-          {
-            npc: "Furnaces are hot, coin's coming in. That's all a forge ever has to report.",
-            choices: [{ text: "Keep them burning.", depth: 0, end: true }],
-          },
-        ],
-      },
+    shows: ["fire", "iron"],
+    self: "Two hundred families eat because my furnaces burn. People like to talk about the old ones as if they were saints. I've seen what they do to a man who gets in their way. The signs on the old forge doors? My father had them chiselled off. I kept two.",
+    greet: [
+      "The foundry master doesn't stop working. \"Whatever you're selling, we have it.\"",
+      "Corwin wipes his hands and gives you a minute.",
+      "Corwin pours you something that burns and pours himself more.",
+      "Corwin sends the apprentices out before he sits down with you.",
     ],
+    nothing: "That's all I know, and more than I wanted to.",
+    reacts: {
+      sighting: "\"So they fly over the roofs. So do pigeons.\" He doesn't look at it for long.",
+      word: "He goes quiet. \"Those were on the old forge doors. My father had them chiselled off.\"",
+      place: "\"Nothing there that pays.\"",
+      person: "\"Decent enough. Talks too much.\"",
+      clue: "\"Gossip,\" he says, but he reads it twice.",
+      memory: "\"How do you know about that?\" He's on his feet. \"Who've you been talking to?\"",
+    },
+    jump: "Good. Though you didn't ask what it'd cost.",
   },
-
-  // ─────────────────────────────────────────────────────────────────────────────
   {
     id: "maren",
     name: "Dr. Maren Voss",
     role: "Physician of the Cistern Quarter",
     quarter: "cistern",
     initials: "MV",
-    threads: [
-      {
-        id: "maren-water",
-        title: "The sweet water",
-        exchanges: [
-          {
-            npc: "Nobody in the Cistern Quarter has had a fever in eleven years. I've checked the ledgers twice. The rest of the town has fevers every spring, as towns do.",
-            interjections: [
-              { lens: "PHYSIC", minLevel: 1, text: "Eleven years without fever, in the dampest quarter. That isn't luck.", followUp: "What's different about this quarter?" },
-              { lens: "LEDGER", minLevel: 1, text: "Eleven years ago the town rebuilt the culverts after the flood.", followUp: "What changed eleven years ago?" },
-            ],
-            choices: [
-              { text: "That's remarkable.", depth: 1 },
-              { text: "Then we'll copy whatever you're doing across the town.", solutionJump: true },
-            ],
-            jumpReply: "I'm not doing anything. That's the point.",
-            clue: { id: "no-fever", text: "No fever in the Cistern Quarter for eleven years — since the culverts were rebuilt after the flood." },
-          },
-          {
-            npc: "The koi come up the culverts every night and graze. In the morning the water is clear and it doesn't smell. The old wives say the koi keep it sweet. I used to laugh at the old wives.",
-            interjections: [
-              { lens: "SURVEY", minLevel: 1, text: "Where the koi graze the channels, nothing stands still long enough to sour.", followUp: "Which wells do the koi visit?" },
-            ],
-            checks: [
-              {
-                lens: "PHYSIC", difficulty: 10,
-                pass: {
-                  npc: "She opens her notebook. \"I drew water from a well the koi visit and one they don't, and left both a week. Only one turned.\"",
-                  clue: { id: "koi-sweeten", text: "Maren's test: water from a well the koi visit stayed clean; water from a well they avoid went foul in a week." },
-                },
-                fail: { npc: "\"Old wives' talk. I'm a physician. I shouldn't repeat it.\"" },
-              },
-            ],
-            choices: [{ text: "Go on.", depth: 1 }],
-          },
-          {
-            npc: "I don't know what they are, Mayor. I don't think they're gods. But I think we've lived off them a long time without asking what we give back.",
-            choices: [
-              { text: "What do you think we give back?", depth: 2, reply: "\"The mites eat what we let fall. Ash, crumbs, the warmth from our windows. Maybe that's all it ever was. A town is food.\"" },
-              { text: "Then let's find out before we build anything else.", depth: 1, effects: [{ type: "stance", kin: 1 }], end: true },
-            ],
-            clue: { id: "town-is-food", text: "Maren: the mites feed on what the town lets fall — ash, crumbs, the warmth of windows. A town is food." },
-          },
-        ],
-        onEnd: [{ type: "flag", value: "met-maren" }],
-      },
-      {
-        id: "maren-sleep",
-        title: "The long sleep",
-        priority: 6,
-        requires: [{ type: "OR", conditions: [{ type: "speciesBelow", key: "koi", value: 0.75 }, { type: "flag", value: "koi-leaving" }] }],
-        exchanges: [
-          {
-            npc: "Four people in this quarter won't wake. Not fever. They breathe, they turn over. They just don't wake.",
-            interjections: [
-              { lens: "PHYSIC", minLevel: 1, text: "No fever, no wound, no poison you know of. Sleep, and nothing else.", followUp: "Where do they live?" },
-              { lens: "SHRINE", minLevel: 2, text: "Ondine's grandmother called it the long sleep. It came the year of the flood.", followUp: "Has this happened before — the year of the flood?" },
-            ],
-            choices: [
-              { text: "Where do they live?", depth: 1, reply: "\"All four on the east culvert. The one the koi stopped coming up.\"" },
-              { text: "We'll quarantine the quarter.", solutionJump: true },
-            ],
-            jumpReply: "From what? I can't find anything to keep out.",
-            clue: { id: "long-sleep", text: "People on the east culvert won't wake. The koi stopped coming up that culvert first." },
-          },
-          {
-            npc: "I don't believe in omens, Mayor. I believe in water.",
-            checks: [
-              {
-                lens: "LEDGER", difficulty: 10,
-                pass: {
-                  npc: "She pulls a water-stained ledger from her bag. \"The flood year. Before the Drowned Quarter went under, the record says the koi left its wells. The sleep came first. Then the water.\"",
-                  clue: { id: "drowned-koi", text: "Before the Drowned Quarter flooded, the koi left its wells. The sleep came first, then the water." },
-                },
-                fail: { npc: "\"Find me the old flood records, if anyone kept them.\"" },
-              },
-            ],
-            choices: [
-              { text: "Wardstones around the wells. Keep whatever this is out.", depth: 1, effects: [{ type: "stance", ward: 1 }], reply: "\"Out?\" Maren says. \"Mayor, I think what we need is the thing that left.\"" },
-              { text: "Then we give the koi deep water of their own.", depth: 1, effects: [{ type: "stance", kin: 1 }, { type: "flag", value: "maren-cistern" }], reply: "\"A cistern they can trust,\" she says. \"Yes. Start there.\"" },
-            ],
-          },
-        ],
-        onEnd: [{ type: "flag", value: "heard-maren-sleep" }],
-      },
-      {
-        id: "maren-blood",
-        title: "Moonrise",
-        priority: 8,
-        requires: [{ type: "bloodMoon" }],
-        exchanges: [
-          {
-            npc: "At moonrise every patient in the physic house sat up in bed. Every one, at the same moment. They're facing the tower. They won't lie down and they won't answer me.",
-            interjections: [
-              { lens: "PHYSIC", minLevel: 1, text: "Their eyes are open. They're breathing slow and even. Whatever this is, it isn't pain.", followUp: "Are they in any danger?" },
-              { lens: "SHRINE", minLevel: 1, text: "They're watching the same thing the old ones are.", followUp: "What do you think they're looking at?" },
-            ],
-            choices: [
-              { text: "Stay with them. I want to see.", depth: 2, reply: "You stand at the window with her until the moon is high. Out over the tower, something with a halo turns slowly, and every head in the ward turns with it." },
-              { text: "Close the shutters. Get them to sleep.", solutionJump: true },
-            ],
-            jumpReply: "She closes them. The patients turn toward the tower through the wood.",
-            clue: { id: "sleepers-watch", text: "Under the blood moon the sleepers sat up and watched the tower, turning as the Watcher turned." },
-          },
-        ],
-        onEnd: [{ type: "flag", value: "heard-maren-blood" }],
-      },
-      {
-        id: "maren-idle",
-        title: "Rounds",
-        priority: -1,
-        repeatable: true,
-        exchanges: [
-          {
-            npc: "Rounds are quiet tonight. I'll send for you if that changes.",
-            choices: [{ text: "Thank you, Doctor.", depth: 0, end: true }],
-          },
-        ],
-      },
+    shows: ["water", "sleep"],
+    self: "Nobody in the Cistern Quarter has had a fever in eleven years. I've checked the ledgers twice. The old wives say the koi keep the water sweet. I'm a physician; I believe in water. But I've copied the signs off the cistern domes into my casebook, in case.",
+    greet: [
+      "The physician looks up from her casebook and doesn't close it.",
+      "Maren makes room for you between the jars.",
+      "Maren reads you a line from her casebook before you've sat down.",
+      "Maren locks the door behind you. \"I want to show you something I haven't shown anyone.\"",
     ],
+    nothing: "That's everything in my casebook. I'll write to you if it changes.",
+    reacts: {
+      sighting: "She copies it into her casebook. \"Date and quarter. Good. Most people only bring me rumours.\"",
+      word: "She turns her casebook round. The same sign is drawn in the margin, beside a list of patients.",
+      place: "\"I've had patients from there. Fewer than I should have.\"",
+      person: "\"They've been my patient. I won't tell you what for.\"",
+      clue: "\"Evidence,\" she says. \"Finally.\"",
+      memory: "\"Interesting.\" She writes something down. \"You've never been to my surgery before, have you?\"",
+    },
+    jump: "Then do it. But you don't yet know what's wrong.",
   },
 ];
+
+// The Watcher: once you can see enough of the old ones (Insight), it will come down to you.
+// It answers only in sigils.
+export const WATCHER = {
+  id: "watcher",
+  name: "The Watcher",
+  role: "The haloed one over the Old Tower",
+  quarter: "centre",
+  initials: "◯",
+  insightNeeded: 4,
+  greet: [
+    "It comes down out of the dark above the tower and hangs in front of you, turning. Every eye on its halo is on you.",
+  ],
+  says: "Light runs round its halo and settles into a shape, the way a word settles on a tongue.",
+};
 
 export const CHARACTER_BY_ID = Object.fromEntries(CHARACTERS.map((c) => [c.id, c]));

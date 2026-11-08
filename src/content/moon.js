@@ -1,8 +1,9 @@
 // content/moon.js — the lunar cycle, and the blood moon.
 //
-// Every night is one lunar day. The cycle is compressed to eight lunar days (one per phase) so
-// a whole month fits in a handful of nights. `MOON.startPhase` is the phase of night 1; starting
-// at the new moon puts the full moon on night 5, with night 6 as the morning after.
+// Every night is one lunar day, and one loop is one lunar month: eight nights, one per phase.
+// A loop starts the morning after a full moon (waning gibbous) and ends at the next full moon,
+// night 8, when the town resets. So the trail goes cold as the moon wanes, the new moon (night 4)
+// is the darkest and most dangerous night, and the reckoning builds as it waxes.
 //
 // Each phase changes the old ones a little:
 //   pop     multiplies a species' share while that phase lasts (like a building's pop)
@@ -13,10 +14,11 @@
 // old ones. `MOON.blood.when` is a list of conditions (core/rules.js), any one of which is
 // enough, and `unless` can call it off. It is read at dusk the night before the full moon (so
 // it can be foreseen) and decided at the full moon's own dusk (so it can still be averted).
+// A blood moon takes someone, and they are the next loop's missing person.
 
 export const MOON = {
   cycle: 8,
-  startPhase: 0, // index into PHASES for night 1 (0 = new moon)
+  startPhase: 5, // index into PHASES for night 1 (5 = waning gibbous, so night 8 is full)
 
   blood: {
     // any one of these at dusk makes the coming full moon a blood moon
@@ -26,11 +28,12 @@ export const MOON = {
       { type: "hungry", key: "koi", nights: 2 },
       { type: "stanceShare", pull: "bind", value: 0.45 },
       { type: "stanceShare", pull: "ward", value: 0.45 },
+      { type: "insightAbove", value: 6 }, // they have noticed you
     ],
-    // ...unless one of these holds: keeping the old courtesies on the eve turns it pale again
-    unless: [{ type: "flag", value: "courtesies-kept" }],
-    // a Shrine-keeping lens this high can read it in the sky a night early
-    foreseenAt: 2,
+    // ...unless one of these holds: finding the missing person alive before the full moon
+    unless: [{ type: "flag", value: "found" }],
+    // with this much Insight you can read a coming blood moon in the sky a night early
+    foreseenAt: 3,
     pop: { eel: 1.6, jelly: 1.4, wisp: 0.8 },
     gather: ["wisp", "swift", "koi", "moth", "jelly", "eel", "halo-eyed-seraph"],
     wardStrength: 0.5, // iron holds half as far under a red moon

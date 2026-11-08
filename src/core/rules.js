@@ -67,6 +67,12 @@ export const CONDITIONS = {
   moonOmen: (c, ctx) => !!get(ctx, "moon.omen", false),
   nightsToFull: (c, ctx) => get(ctx, "moon.toFull", -1) === c.value,
 
+  // the detective
+  insightAbove: (c, ctx) => get(ctx, "insight", 0) >= c.value,
+  caseIs: (c, ctx) => get(ctx, "case.cause") === c.value,
+  knowsWord: (c, ctx) => !!get(ctx, `lexicon.${c.value}`),
+  loopAbove: (c, ctx) => get(ctx, "loop", 1) >= c.value,
+
   // combinators
   AND: (c, ctx) => (c.conditions || []).every((x) => evalOne(x, ctx)),
   OR: (c, ctx) => (c.conditions || []).some((x) => evalOne(x, ctx)),

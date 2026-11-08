@@ -24,6 +24,9 @@ export class ScenarioSystem {
 
   get fired() { return [...this.#fired]; }
 
+  // a new loop: nothing has fired, nothing is queued
+  reset() { this.#fired = new Set(); this.#queued = []; }
+
   evaluate(night) {
     const ctx = { state: this.#state, bus: this.#bus };
     const fired = [];

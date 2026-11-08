@@ -8,11 +8,16 @@
     "build": "vite build",
     "preview": "vite preview",
     "species": "node tools/slim-species.mjs",
-    "playtest": "node tools/playtest.mjs"
+    "playtest": "node tools/playtest.mjs",
+    "sigils": "node tools/build-sigils.mjs",
+    "artifact": "vite build && node tools/artifact.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.1.1",
     "svelte": "^5.57.3",
     "vite": "^6.4.5"
+  },
+  "dependencies": {
+    "three": "^0.169.0"
   }
 }

@@ -9,12 +9,10 @@
 export const TOWN = {
   name: "Vesper",
   epithet: "a walled town on the old ones' water",
-  nights: 6, // length of this slice
-  visitsPerNight: 2,
-  startingCoin: 6,
-  tithe: 1,        // coin the town pays in every night, whatever is built
-  hopefulTithe: 1, // extra coin on nights when hope is at least `hopefulAt`
-  hopefulAt: 6,
+  nights: 8, // one lunar month: the morning after a full moon to the next full moon
+  actionsPerNight: 2,
+  handSize: 5,
+  startingDread: 2,
 };
 
 // The four quarters are the wedges between the four avenues (the solver keeps an avenue
@@ -30,16 +28,6 @@ export const QUARTERS = [
   { id: "drowned", name: "Drowned Quarter", from: 270, to: 360,
     blurb: "Shuttered since the flood. Nobody will say which flood." },
 ];
-
-// Lenses are Mandate's departments, turned into the town's ways of paying attention. A lens's
-// level decides which interjections you hear in conversation and how well your checks roll.
-export const LENSES = {
-  SHRINE: { name: "Shrine-keeping", color: "#c9a96e", blurb: "Rites, omens, what the old ones are owed." },
-  SURVEY: { name: "Survey", color: "#7fa6b8", blurb: "Stone, water, slope — what the land will bear." },
-  PHYSIC: { name: "Physic", color: "#b07a8c", blurb: "Bodies, sleep, sickness." },
-  LEDGER: { name: "Ledger", color: "#9a9a7a", blurb: "Records, debts, who said what and when." },
-};
-export const STARTING_LENSES = { SHRINE: 1, SURVEY: 1, PHYSIC: 1, LEDGER: 0 };
 
 export const ZONE_NAMES = {
   core: "The Old Tower",

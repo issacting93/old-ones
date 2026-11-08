@@ -21,8 +21,10 @@ const CLOSED = {
 };
 const buildingTileId = (kind, zone) => `build:${kind}:${zone}`;
 
-export function createTownMap(CityWFC, seed) {
-  const defs = [...TILE_DEFS];
+// `weights` (tile id → multiplier) lets a sentence reshape what the town grows: "water" makes
+// culverts and cisterns likelier everywhere. Tiles the solver depends on are never weighted to 0.
+export function createTownMap(CityWFC, seed, { weights = {} } = {}) {
+  const defs = TILE_DEFS.map((d) => (weights[d[0]] && d[4] > 0 ? [d[0], d[1], d[2], d[3], d[4] * weights[d[0]], d[5], d[6]] : d));
   for (const b of BUILDINGS) for (const z of b.zones) defs.push([buildingTileId(b.id, z), b.name, z, CLOSED[z], 0, false, b.blurb]);
   const tiles = CityWFC.buildTiles(defs);
   const tileIndex = new Map(tiles.map((t) => [t.id, t.index]));

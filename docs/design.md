@@ -1,56 +1,82 @@
-# Design notes — first slice
+# Design notes
 
-## The question
+The full design lives in the core design doc (Claude Docs, "The Old Ones — Core Design"). This file records what the code does today and where each idea lives.
 
-What do the old ones want from us, and what do we want from them? The town is a way of asking how people live with something older and stranger than themselves — nature, technology, AI — without deciding in advance that it is a god or a monster. The old ones are revered, not worshipped. They were here first. The tone is quiet and mysterious rather than horror: lamps at dusk, still water, things that drift.
+## The game in one paragraph
 
-## The loop (one night)
+You are an outsider who arrives in Vesper to find someone who has gone missing. A loop is one lunar month, eight nights from the morning after one full moon to the next. Each night the town deals you people and places; you play two, mostly by talking. What people know comes from a mystery generated out of the town and its old ones. At the full moon you name what happened, and then write a sentence in the old ones' language on the tower door. The town forgets; you don't. The next town grows from your sentence.
 
-1. **Dusk.** Events fire from the state the last night left behind (`content/events.js`).
-2. **Evening.** Visit up to two townsfolk. Each person offers one thread, chosen by what is true in the world tonight (`content/characters.js`).
-3. **Council.** One decision: build something (`content/buildings.js`) or fund a lens.
-4. **Night.** The old ones live with the decision for a while (fast-forwarded sim). The hunger rule runs (`content/ecology-rules.js`). The town reads where everything ended up.
+## Thesis
 
-Six nights, then the council sits and the slice ends on the town's stance.
+Vesper is a message passed through time, and the player writes it. Stories outlast almost everything people make; the strongest proposals for warning people ten thousand years ahead about nuclear waste were stories, not signs (the atomic priesthood, the ray cats). Your sentence is a message to a town that won't remember you, and the town keeps it the way towns keep things: as rites, worn down. The larger mystery (`content/lore.js`) ends with the courtesies (lamps at dusk, still water, no iron in the groves) turning out to be a sentence carved in your own hand.
 
-## Pillars carried over from Mandate
+## The brain
 
-- **Listening before deciding.** Promising a fix before you have understood (a solution-jump) loses the clue and raises dread.
-- **Perception is funded.** Lenses (Shrine-keeping, Survey, Physic, Ledger) decide which interjections you hear and how your checks roll. Buildings raise lenses too: a shrine sharpens Shrine-keeping.
-- **Failure opens different content, never nothing.** A failed check still gets words.
+One causal chain runs the game, recorded each loop in `core/graph.js`:
 
-## What is new
+```
+your sentence ─► the city ─► the old ones ─► the mystery ─► what people know ─► what you learn ─► your sentence
+ (sigils.js)   (town-map)   (ecology)      (case.js)      (cases.js facts)   (talk.js)
+```
 
-- **The world talks back.** The ecology is real (Cybernetic Ecology's sim), and its state is a condition events and conversations can read: `speciesBelow`, `inQuarter`, `hungry`, `intruding`. One foundry thins the mites → the koi, swifts and eels go hungry → an eel comes over the Cinder heaps → Corwin wants wardstones; the koi leave the east culvert → people stop waking → Maren finds the flood record.
-- **Stance is a position, not a score.** Kinship / Distance / Dominion are three pulls; the town sits at their shares (`content/stance.js`). Nothing locks; it can always be pulled back.
-- **Building is local.** A building pins a WFC cell to a zero-weight tile and only the surrounding patch regrows, so the town changes where you build rather than reshuffling.
+- `content/sigils.js` `compileSentence` turns words into rules: buildings to pin, tile weights, species numbers, what the tower gathers, stance, dread.
+- `world/town-map.js` regrows the radial WFC town with those weights and pins the buildings.
+- `world/ecology.js` runs the creature sim in it; `game/engine.js` runs the hunger rule.
+- `game/case.js` scores every cause in `content/cases.js` against that world and picks one, then writes the chain into the graph.
+- At the full moon the reckoning reads the graph backwards to show why it happened.
 
-## The moon
+## A night
 
-Every night is one lunar day of a compressed eight-day cycle (`content/moon.js`). The slice starts at the new moon, so the full moon falls on night 5 and night 6 is the morning after. Each phase nudges the old ones: the new moon lets the eels range wider, the waxing moon draws the Watcher to the tower, the full moon lifts the mites and moths toward it. The moon crosses the map while the night passes and its light tints the town.
+1. **Dusk:** events (`content/events.js`), the moon, and sightings: the case's own signs on nights 2 and 5, plus where the old ones are thickest.
+2. **The deal:** five cards, at least two people and two places. A lead someone just gave you is always in the next hand.
+3. **Two actions:** talk to a person (`core/talk.js`) or search a place (what stands there, which old ones are near, a carved word, physical evidence, maybe the missing person).
+4. **Deduce:** on the Case tab, put two things you know together. Only the right pairs make a deduction.
+5. **The night passes:** the sim fast-forwards, hunger runs, the town takes readings.
 
-**The blood moon.** A full moon rises red when the town has strained things with the old ones — dread high, the eels or koi starving, or the town leaning hard toward Distance or Dominion (`MOON.blood.when`). The night before, there is an omen: a Shrine-keeper (lens 2+) reads it plainly in the sky and the almanac marks it; everyone else just notices the dogs won't settle. Ondine then offers a choice for the eve: keep the old courtesies (which can still turn the moon pale), ring iron bells, or plan to take the old ones at the tower. Under a blood moon every old one gathers at the Old Tower, the eels and veils swell, wardstones hold half as far, and what happens depends on where the town stands: they wait at the shrines like guests (Kinship), press against the iron until it splits (Distance), or hang over the forges and presses counting what was taken (Dominion). The sleepers in the physic house sit up and watch. A clear full moon instead brings moon-viewing on the rooftops.
+## Talking
 
-## Routes, as the playtests show them
+Mandate's rules, rebuilt for a detective (`core/talk.js`):
 
-- **Industry** (foundries, lamps, glow-press): coin piles up; mites thin, eels come inside, the koi leave, the long sleep, the Watcher climbs out of sight, and the full moon rises red over the forges. Dominion.
-- **Kin** (shrines, cisterns): mites come thick, the Watcher comes down, the full moon is a clear moon-viewing, but nothing earns, and the Cinder Quarter goes cold — Corwin sends sixty men home. Kinship has a price too.
-- **Ward** (wardstones): dread drops at first, then the stones keep more out than they meant to, and under the blood moon the old ones press against the iron all night. Distance.
-- Keeping the courtesies on the eve of a foretold blood moon turns it pale again — the one moment a strained town can pull back.
+- Topics instead of a script: the case, the person themselves, or a card you show them. Three topics per visit.
+- Surface facts come out when asked. Hidden facts come out through trust (listening), a press check (trust × 3 + 2d6 against 9; failing tells you why they're guarded), evidence (showing the card that triggers them), or a sigil word.
+- **Sigils are the lenses.** When a hidden fact sits under what someone says and you know the word for it, the word interjects with a follow-up question. If you misread the word, the question comes out wrong and the misreading is exposed.
+- Promising a fix before you understand ("I'll find her") loses trust and raises dread.
+- Showing a memory from a past loop gets "How do you know that?": trust drops, but if the same fact exists in this case, they tell you.
 
-## Known gaps in this slice
+## The language
 
-- The town map is drawn flat from the WFC result. Forge's creature-part architecture (`creature-city.js`, Spire Forge towers, World Scene / Route Scene staging) isn't wired in yet.
-- Forge's ecology loop (`shared/generators/ecology-loop.js`) — species drifting their swim toward the buildings they live around — isn't used yet; buildings only draw, repel and reweight.
-- Mandate systems not yet brought over: the weekly card deal (who you can visit), insight freshness and pattern crystallization (clues becoming revelations), the bento policy board.
-- The Drowned Quarter has no one in it. That is deliberate for now: it is where the next slice begins.
-- Numbers (costs, multipliers, thresholds) are first guesses. `npm run playtest` is the quickest way to see what a change does.
+Ten words (`content/sigils.js`), drawn from your Sigil Forge alphabet by `tools/build-sigils.mjs` into Arrival-style ink rings (`ui/Sigil.svelte`). You see a word first as a guess (wrong 30% of the time, mistaken for its `decoy`); seeing it in a second place settles it. Places carve words, the core cast each show a few, and the Watcher (Insight 4+) traces them. A sentence holds two words, plus one per three you are sure of. A word writes what it truly means, so an unexposed misreading writes something you didn't intend.
 
-## Next steps
+**Insight** = words known. 3: you read a coming blood moon a night early. 4: the Watcher comes down to you. 6: the old ones notice you, dread rises, and a blood moon becomes likely.
 
-1. Stage the town with Forge: replace the flat plan with Route Scene's flat Kentucky Route Zero staging or World Scene Next's glowing creature-part architecture, using `shared/world/world-layout.js` as the bridge.
-2. Bring in the ecology loop so species visibly change around buildings (new variants the town has bred by accident).
-3. A fourth character in the Drowned Quarter, and the flood as the slice-two mystery.
-4. Clues → revelations: Mandate's pattern crystallization, so committing to an understanding of the old ones changes what lenses can see.
-5. Endings that depend on stance and on what you learned, not just which pull leads.
-6. The `tower-snare` and `iron-bells` choices on the eve of a blood moon set flags that nothing reads yet; they are the hooks for what Dominion and Distance do with a gathered moon.
+## The cases
+
+| Cause | What drives it | Found at |
+|---|---|---|
+| Starving eels | Forges and lamphouses thin the mites; the eels go hungry | The culvert grate |
+| The long sleep | Koi leave the culverts; the town's default habit | The tower's lowest door |
+| The glow-press | Only in a town with a glow-press | Inside a veil over the groves |
+| The wardstones | Only in a town with wardstones | The flooded dye-works cellar |
+| The guest | Kin, open and lamplight words; mites very thick | The pear ring beyond the north gate |
+
+Each has facts held by the relative, a witness, the core three and places; two deductions; and a key deduction that proves the cause.
+
+## The full moon
+
+Night 8. A blood moon rises if the town is strained (dread 5+, starving eels or koi, a hard lean toward Distance or Dominion, Insight 6+) unless you found the missing person alive. You name what happened; naming it right answers the next question of the larger mystery. A blood moon takes the relative who went looking (or the witness, if you found the missing person), and they are the next loop's case. Then you write.
+
+## What carries between loops
+
+Saved in the browser (`localStorage`, key `old-ones.carry.v1`): the lexicon, up to 12 memories, stance, the sentence, the next missing person, how many questions are answered, and the history of towns. The town, its people's trust, its buildings and its dread are all new.
+
+## Checking changes
+
+`npm run playtest -- 3 listener` plays three loops headless; `hasty` plays a detective who promises fixes. The log shows each night, what was learned, the reckoning, the brain's explanation and the sentence written.
+
+## Known gaps
+
+- The map is still the flat plan. Route Scene's Kentucky Route Zero staging is the next visual step (design doc, "Look").
+- Generated people speak in templates; an LLM voicing them over engine-owned facts (Mandate's rule split) is the natural next step for variety.
+- Mandate's insight freshness and costly de-commit aren't in; deductions don't yet colour what you hear.
+- Five cases is enough to see the system work, not enough for many loops. The fifth question of the larger mystery has no ending sequence yet.
+- Balance is first guesses: dread climbs fast in a forge town, and a careful player finds most missing people.

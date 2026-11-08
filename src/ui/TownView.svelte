@@ -10,11 +10,12 @@
   import { PHASES, BLOOD_PHASE } from "../content/moon.js";
   import MoonGlyph from "./MoonGlyph.svelte";
 
-  let { game, snap, placing = null, selected = $bindable(null), onpick, progress = 0 } = $props();
+  // `focus`: cell ids to outline (the place on the card you're pointing at)
+  let { game, snap, focus = [], progress = 0 } = $props();
 
   // ── the sky: the moon crosses the map as the night passes, and the night tints the town ──
-  const moonIdx = $derived(Math.max(0, PHASES.findIndex((p) => p.id === snap.moon.phase)));
-  const blood = $derived(!!snap.moon.blood);
+  const moonIdx = $derived(Math.max(0, PHASES.findIndex((p) => p.id === snap.moon?.phase)));
+  const blood = $derived(!!snap.moon?.blood);
   const light = $derived(blood ? BLOOD_PHASE.light : PHASES[moonIdx].light);
   // a full moon rises at dusk; a new one is down all night. Evening holds the moon at its
   // dusk position; while the night passes it runs along the arc toward dawn.
@@ -37,7 +38,7 @@
   let renderer = null;
   let dirty = true;
 
-  const { town, eco } = game;
+  // the town and its old ones are rebuilt every loop, so always read them from the game
   const FILL = {
     street: "#3a342a", house: "#181512", market: "#2d251b", civic: "#30281c", shrine: "#4f3f22",
     water: "#123744", grove: "#17261b", wall: "#46413a", gate: "#7a6844", tower: "#5f4f31", court: "#181512",
@@ -45,12 +46,12 @@
 
   // city-local → canvas px, through the same tank space the sim uses
   function px(p) {
-    const t = eco.toTank(p), k = size / eco.sim.bounds.w;
+    const t = game.eco.toTank(p), k = size / game.eco.sim.bounds.w;
     return { x: t.x * k, y: t.y * k };
   }
   function toCity(cx, cy) {
-    const k = eco.sim.bounds.w / size;
-    return eco.toCity({ x: cx * k, y: cy * k });
+    const k = game.eco.sim.bounds.w / size;
+    return game.eco.toCity({ x: cx * k, y: cy * k });
   }
   const scale = () => px({ x: 1, y: 0 }).x - px({ x: 0, y: 0 }).x;
 
@@ -65,7 +66,8 @@
   }
 
   function drawPlan() {
-    if (!plan) return;
+    const town = game.town;
+    if (!plan || !town || !game.eco) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     plan.width = size * dpr; plan.height = size * dpr;
     const ctx = plan.getContext("2d");
@@ -87,19 +89,18 @@
       ctx.strokeStyle = "#0d0c0b"; ctx.lineWidth = 0.8; ctx.stroke();
     }
 
-    // buildable cells for the building being placed
-    if (placing) {
-      ctx.setLineDash([2, 3]);
-      for (const c of town.cells) {
-        if (!town.canBuild(placing, c.id)) continue;
-        sector(ctx, c, 1.5);
-        ctx.strokeStyle = "rgba(201,169,110,.55)"; ctx.lineWidth = 1; ctx.stroke();
+    // the place on the card you're pointing at
+    if (focus.length) {
+      ctx.setLineDash([3, 3]);
+      for (const id of focus) {
+        sector(ctx, town.cells[id], 1.2);
+        ctx.strokeStyle = "rgba(201,169,110,.75)"; ctx.lineWidth = 1.2; ctx.stroke();
       }
       ctx.setLineDash([]);
     }
 
     // building marks
-    for (const b of snap.built) {
+    for (const b of snap.built || []) {
       const p = px(town.centroid(b.cellId));
       ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2.5, s * 0.28), 0, Math.PI * 2);
       ctx.fillStyle = "#0d0c0b"; ctx.fill();
@@ -116,11 +117,7 @@
       ctx.fillText(q.name, p.x, p.y);
     }
 
-    if (selected != null) {
-      sector(ctx, town.cells[selected], 0.5);
-      ctx.strokeStyle = "#e9e1cf"; ctx.lineWidth = 1.5; ctx.stroke();
-    }
-    if (hover && hover.id !== selected) {
+    if (hover && town.cells[hover.id] === hover) {
       sector(ctx, hover, 0.5);
       ctx.strokeStyle = "rgba(233,225,207,.5)"; ctx.lineWidth = 1; ctx.stroke();
     }
@@ -129,21 +126,14 @@
   function cellFromEvent(e) {
     const r = plan.getBoundingClientRect();
     const p = toCity(e.clientX - r.left, e.clientY - r.top);
-    return town.cellAt(p.x, p.y);
+    return game.town?.cellAt(p.x, p.y) || null;
   }
 
   function onmove(e) { const c = cellFromEvent(e); if (c?.id !== hover?.id) { hover = c; dirty = true; } }
   function onleave() { hover = null; dirty = true; }
-  function onclick(e) {
-    const c = cellFromEvent(e);
-    if (!c) return;
-    selected = c.id;
-    dirty = true;
-    onpick && onpick(c);
-  }
 
   // redraw the plan when the town or the selection changes
-  $effect(() => { snap; placing; selected; size; dirty = true; });
+  $effect(() => { snap; focus; size; dirty = true; });
   $effect(() => game.bus.on("town.changed", () => (dirty = true)));
 
   onMount(() => {
@@ -157,7 +147,7 @@
     });
     ro.observe(wrap);
     try {
-      renderer = window.EcologyRender.create(gl, game.eco.ES);
+      renderer = window.EcologyRender.create(gl, window.EcologySpecies);
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       window.EcologyRender.resize(renderer, size * dpr, size * dpr); // framebuffers exist before the first frame
     } catch (err) {
@@ -168,8 +158,10 @@
     let last = performance.now(), raf;
     const frame = (now) => {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
-      if (game.state.get("phase") === "evening") eco.step(dt); // while the night passes, fastForward steps it
+      const eco = game.eco;
+      if (eco && game.state.get("phase") === "evening") eco.step(dt); // while the night passes, fastForward steps it
       if (dirty) { drawPlan(); dirty = false; }
+      if (!eco) { raf = requestAnimationFrame(frame); return; }
       if (renderer) {
         window.EcologyRender.frame(renderer, {
           sim: eco.sim, time: now / 1000, worldW: eco.sim.bounds.w, worldH: eco.sim.bounds.h,
@@ -202,16 +194,16 @@
   {/if}
   <div class="stage" style="width:{size}px;height:{size}px">
     <canvas class="plan" bind:this={plan} style="width:{size}px;height:{size}px"
-      onmousemove={onmove} onmouseleave={onleave} onclick={onclick}></canvas>
+      onmousemove={onmove} onmouseleave={onleave}></canvas>
     <canvas class="gl" bind:this={gl} style="width:{size}px;height:{size}px"></canvas>
     <canvas class="gl" bind:this={fallback} style="width:{size}px;height:{size}px"></canvas>
     {#if moonUp}
       <div class="moon" style="left:{moonPos.x}px;top:{moonPos.y}px"><MoonGlyph index={moonIdx} {blood} size={Math.max(22, size * 0.06)} glow /></div>
     {/if}
-    {#if hover}
-      {@const t = town.tileAt(hover.id)}
+    {#if hover && game.town}
+      {@const t = game.town.tileAt(hover.id)}
       <div class="tip">
-        <span class="label">{hover.quarter ? QUARTERS.find((q) => q.id === hover.quarter).name : "The centre"} · {town.zoneName(hover.zone)}</span>
+        <span class="label">{hover.quarter ? QUARTERS.find((q) => q.id === hover.quarter).name : "The centre"} · {game.town.zoneName(hover.zone)}</span>
         <span class="name">{t.name}</span>
       </div>
     {/if}
@@ -223,7 +215,7 @@
   .wrap > .stage { grid-area: 1 / 1; }
   .stage { position: relative; }
   canvas { position: absolute; inset: 0; display: block; }
-  .plan { cursor: crosshair; }
+  .plan { cursor: default; }
   .gl { pointer-events: none; }
   .sky { position: absolute; inset: 0; pointer-events: none; }
   .tint { mix-blend-mode: multiply; transition: background 1.2s ease; z-index: 2; }
